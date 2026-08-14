@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stickman Gym Simulator 2D 🏋️</title>
+    <style>
+        body {
+            background-color: #09090b !important;
+            color: #ffffff !important;
+            font-family: 'Courier New', monospace;
+            margin: 0; padding: 0;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; overflow: hidden;
+        }
+        .tela { display: none; text-align: center; width: 90%; max-width: 500px; }
+        .ativa { display: block; }
+        h1 { font-size: 32px; color: #22c55e; margin-bottom: 30px; font-weight: bold; }
+        .btn {
+            display: block; width: 100%; padding: 15px; margin: 10px 0;
+            font-size: 16px; font-weight: bold; background-color: #1e1e24;
+            color: white; border: none; border-radius: 8px; cursor: pointer;
+        }
+        .btn:hover { background-color: #27272a; }
+        .grid-academia { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .box { background: #16161c; padding: 15px; border-radius: 8px; border: 1px solid #334155; }
+        pre { font-size: 14px; font-weight: bold; line-height: 1.2; text-align: left; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <!-- 🚪 TELA: MENU -->
+    <div id="tela-menu" class="tela ativa">
+        <h1>STICKMAN GYM</h1>
+        <button class="btn" onclick="novoJogo()">NOVO JOGO</button>
+        <button class="btn" onclick="carregarJogo()">CARREGAR JOGO</button>
+        <button class="btn" onclick="mudarTela('tela-opcoes')">OPÇÕES</button>
+        <a href="index.html" class="btn" style="background-color: #3f3f46; text-decoration: none; display: block; box-sizing: border-box;">◀ VOLTAR PRO MENU</a>
+    </div>
+
+    <!-- ⚙️ TELA: OPÇÕES -->
+    <div id="tela-opcoes" class="tela">
+        <h2 style="color: #eab308;">CONFIGURAÇÕES</h2>
+        <p>Selecione a Cor Neon:</p>
+        <button class="btn" style="color: #22c55e;" onclick="mudarTema('#22c55e')">Verde Cyberpunk</button>
+        <button class="btn" style="color: #3b82f6;" onclick="mudarTema('#3b82f6')">Azul Elétrico</button>
+        <button class="btn" onclick="mudarTela('tela-menu')">◀ VOLTAR</button>
+    </div>
+
+    <!-- 🏋️ TELA: JOGO ATIVO (ACADEMIA) -->
+    <div id="tela-jogo" class="tela">
+        <div style="text-align: left; margin-bottom: 10px;">
+            <button class="btn" style="width: auto; display: inline-block; padding: 5px 15px; background: #3f3f46;" onclick="salvarJogo()">💾 SALVAR</button>
+            <button class="btn" style="width: auto; display: inline-block; padding: 5px 15px; background: #991b1b; float: right;" onclick="mudarTela('tela-menu')">◀ MENU</button>
+        </div>
+
+        <div class="grid-academia">
+            <div class="box">
+                <div style="color: #64748b; font-size: 11px; margin-bottom: 10px;">🪞 ESPELHO STICKMAN</div>
+                <pre id="visual-boneco" style="color: #94a3b8;"></pre>
+            </div>
+
+            <div class="box">
+                <div id="txt-ranking" style="font-size: 16px; font-weight: bold; margin-bottom: 5px;">RANKING: FRANGO</div>
+                <div id="txt-bicep" style="font-size: 32px; font-weight: bold;">30.0 cm</div>
+                <div id="txt-barra" style="font-family: monospace; font-size: 13px; margin: 5px 0;">░░░░░░░░░░░░░░░░░░░░ 0%</div>
+                <div id="txt-meta" style="color: #64748b; font-size: 11px;">Próxima meta: 45 cm</div>
+                <div id="txt-forca" style="font-size: 26px; font-weight: bold; margin-top: 15px; color: #22c55e;">⚡ 0</div>
+                <button id="btn-treinar" class="btn" style="background-color: #22c55e; margin-top: 10px;" onclick="treinar()">🏋️ METER MARCHA</button>
+            </div>
+
+            <div class="box" style="border-color: #facc15;">
+                <div style="color: #facc15; font-size: 11px; margin-bottom: 5px;">🛒 MERCADO FITNESS</div>
+                <button id="btn-halter" class="btn" style="padding: 8px;" onclick="comprarHalter()"></button>
+                <button id="btn-whey" class="btn" style="background-color: #581c87; padding: 8px;" onclick="comprarWhey()"></button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const estagios = {
+            "Frango": { max: 45, cor: "#94a3b8", parado: "     (o_o) \n     / | \\ \n       |   \n      / \\  \n     /   \\ ", treinando: "    \\(o_o)/ \n      |   \n      |   \n     / \\  \n    /   \\ " },
+            "Rato": { max: 90, cor: "#22d3ee", parado: "     (o_o) \n    💪 | 💪\n     [ | ] \n      / \\  \n     /   \\ ", treinando: "    💪(o_o)💪\n       |   \n     [ | ] \n      / \\  \n     /   \\ " },
+            "Monstro": { max: 300, cor: "#facc15", parado: "     ══╦══ \n     (👁_👁) \n    █████████\n    ██[███]██\n    💪     💪\n     /     \\ ", treinando: "     ⚡(◣___◢)⚡\n    💪███████💪\n    █████████\n    💥  🧪  💥\n     /     \\ " }
+        };
+
+        let bicep_cm = 30.0, forca_total = 0.0, poder_do_clique = 1.0, farm_automatico = 0.0;
+        let custo_halter = 50, custo_whey = 150, cor_tema = "#22c55e";
+
+        function mudarTela(id) {
+            document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+            document.getElementById(id).classList.add('ativa');
+        }
+
+        function obterEstagio() {
+            if (bicep_cm < 45) return "Frango";
+            if (bicep_cm < 90) return "Rato";
+            return "Monstro";
+        }
+
+        function atualizarInterface() {
+            const rank = obterEstagio();
+            const e = estagios[rank];
+            
+            document.getElementById('txt-ranking').innerText = `RANKING: ${rank.toUpperCase()}`;
+            document.getElementById('txt-ranking').style.color = e.cor;
+            document.getElementById('txt-bicep').innerText = `${bicep_cm.toFixed(1)} cm`;
+            document.getElementById('txt-bicep').style.color = e.cor;
+            document.getElementById('txt-forca').innerText = `⚡ ${Math.floor(forca_total).toLocaleString()}`;
+            document.getElementById('txt-forca').style.color = cor_tema;
+            
+            let meta = e.max;
+            let porcentagem = Math.min(Math.floor((bicep_cm / meta) * 100), 100);
+            let blocos = Math.floor(porcentagem / 5);
+            document.getElementById('txt-barra').innerText = `${"█".repeat(blocos)}${"░".repeat(20 - blocos)} ${porcentagem}%`;
+            document.getElementById('txt-barra').style.color = e.cor;
+            document.getElementById('txt-meta').innerText = `Próxima meta: ${meta} cm`;
+            
+            document.getElementById('visual-boneco').innerText = e.parado;
+            document.getElementById('visual-boneco').style.color = e.cor;
+            
+            document.getElementById('btn-halter').innerText = `🏋️ HALTER (+1)\nCusto: ⚡ ${custo_halter}`;
+            document.getElementById('btn-whey').innerText = `🧪 WHEY (+0.5/s)\nCusto: ⚡ ${custo_whey}`;
+        }
+
+        function treinar() {
+            const rank = obterEstagio();
+            bicep_cm += poder_do_clique * 0.2;
+            forca_total += poder_do_clique * 10;
+            
+            document.getElementById('visual-boneco').innerText = estagios[rank].treinando;
+            document.getElementById('visual-boneco').style.color = cor_tema;
+            
+            setTimeout(() => {
+                const r = obterEstagio();
+                document.getElementById('visual-boneco').innerText = estagios[r].parado;
+                document.getElementById('visual-boneco').style.color = estagios[r].cor;
+            }, 150);
+            
+            atualizarInterface();
+        }
+
+        function comprarHalter() {
+            if (forca_total >= custo_halter) {
+                forca_total -= custo_halter;
+                poder_do_clique += 1;
+                custo_halter = Math.floor(custo_halter * 1.5);
+                atualizarInterface();
+            } else { alert("❌ Força insuficiente!"); }
+        }
+
+        function comprarWhey() {
+            if (forca_total >= custo_whey) {
+                forca_total -= custo_whey;
+                farm_automatico += 0.5;
+                custo_whey = Math.floor(custo_whey * 1.5);
+                atualizarInterface();
+            } else { alert("❌ Força insuficiente!"); }
+        }
+
+        function mudarTema(cor) {
+            cor_tema = cor;
+            document.getElementById('btn-treinar').style.backgroundColor = cor;
+        }
+
+        function salvarJogo() {
+            localStorage.setItem("pc_bicep", bicep_cm);
+            localStorage.setItem("pc_forca", forca_total);
+            localStorage.setItem("pc_clique", poder_do_clique);
+            localStorage.setItem("pc_farm", farm_automatico);
+            localStorage.setItem("pc_chalter", custo_halter);
+            localStorage.setItem("pc_cwhey", custo_whey);
+            alert("💾 JOGO SALVO NO CELULAR!");
+        }
+
+        function carregarJogo() {
+            if (localStorage.getItem("pc_bicep")) {
+                bicep_cm = parseFloat(localStorage.getItem("pc_bicep"));
+                forca_total = parseFloat(localStorage.getItem("pc_forca"));
+                poder_do_clique = parseFloat(localStorage.getItem("pc_clique"));
+                farm_automatico = parseFloat(localStorage.getItem("pc_farm"));
+                custo_halter = parseInt(localStorage.getItem("pc_chalter"));
+                custo_whey = parseInt(localStorage.getItem("pc_cwhey"));
+                mudarTela('tela-jogo');
+                atualizarInterface();
+            } else { alert("Nenhum save encontrado!"); }
+        }
+
+        function novoJogo() {
+            bicep_cm = 30.0; forca_total = 0.0; poder_do_clique = 1.0; farm_automatico = 0.0;
+            custo_halter = 50; custo_whey = 150;
+            mudarTela('tela-jogo');
+            atualizarInterface();
+        }
+
+        setInterval(() => {
+            if (farm_automatico > 0 && document.getElementById('tela-jogo').classList.contains('ativa')) {
+                bicep_cm += farm_automatico;
+                forca_total += farm_automatico * 2;
+                document.getElementById('txt-bicep').innerText = `${bicep_cm.toFixed(1)} cm`;
+                document.getElementById('txt-forca').innerText = `⚡ ${Math.floor(forca_total).toLocaleString()}`;
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
