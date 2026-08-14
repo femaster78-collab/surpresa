@@ -1,82 +1,109 @@
 import streamlit as st
-import random
 
-# Configuração da página mobile
 st.set_page_config(page_title="💝 Surpresa!", page_icon="💖", layout="centered")
 
-# Cores travadas contra modo escuro usando CSS interno do Streamlit
+# 🦾 O SUPREMO CÓDIGO HÍBRIDO (Python + JavaScript Nativo para celular)
 st.markdown("""
     <style>
-    /* Força o fundo rosa bebê */
-    .stApp { background-color: #fdf2f8 !important; }
-    
-    /* Força os títulos a ficarem em rosa escuro/vinho bem nítidos */
-    h1, h2, h3, p, span, .stMarkdown { 
-        color: #4c0519 !important; 
-        text-align: center !important; 
+    /* Força o fundo rosa e texto escuro em qualquer celular */
+    html, body, .stApp { 
+        background-color: #fdf2f8 !important; 
+        color: #4c0519 !important;
         font-family: 'Arial', sans-serif !important;
     }
     
-    /* Customização dos botões para ficarem fofos no celular */
-    .stButton>button {
-        width: 100% !important;
-        font-weight: bold !important;
-        border-radius: 12px !important;
-        height: 55px !important;
-        font-size: 16px !important;
-        border: none !important;
+    .container {
+        text-align: center;
+        margin-top: 50px;
+        position: relative;
+        height: 500px;
+        width: 100%;
+    }
+    
+    .titulo {
+        font-size: 30px;
+        font-weight: bold;
+        color: #9d174d !important;
+        margin-bottom: 20px;
+    }
+    
+    .risada {
+        font-size: 22px;
+        font-weight: bold;
+        color: #db2777 !important;
+        height: 40px;
+        margin-bottom: 30px;
+    }
+    
+    /* Estilo dos botões */
+    .btn-comum {
+        padding: 15px 30px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 12px;
+        border: none;
+        color: white !important;
+        box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    #btn-sim {
+        background-color: #f472b6;
+        position: absolute;
+        left: 15%;
+        top: 180px;
+        width: 130px;
+    }
+    
+    /* O NÃO começa na direita e muda para posição absoluta pelo JavaScript */
+    #btn-nao {
+        background-color: #64748b;
+        position: absolute;
+        left: 55%;
+        top: 180px;
+        width: 100px;
+        transition: all 0.1s ease; /* Efeito suave de movimento */
     }
     </style>
-""", unsafe_allow_html=True)
 
-# Inicializa as variáveis na memória da página
-if "pos_nao" not in st.session_state:
-    st.session_state.pos_nao = 0  
-if "provocacao" not in st.session_state:
-    st.session_state.provocacao = ""
-if "aceitou" not in st.session_state:
-    st.session_state.aceitou = False
-
-# As 3 risadas que você escolheu
-risadas = ["Mwahahah! 😈", "Hihihihi! 🏃‍♀️", "Nyehehe! ☠️"]
-
-def fugir():
-    # Sorteia uma das 4 colunas para o botão reaparecer instantaneamente
-    st.session_state.pos_nao = random.randint(1, 4) 
-    st.session_state.provocacao = random.choice(risadas)
-
-def clicar_sim():
-    st.session_state.aceitou = True
-
-# LÓGICA DE TELAS
-if st.session_state.aceitou:
-    st.markdown("<h1 style='font-size: 36px; margin-top: 50px;'>✨ 🎉 Sabia! 🎉 ✨</h1>", unsafe_allow_html=True)
-    st.markdown("<h2 style='color: #db2777 !important;'>❤️ AMO VOCÊ! ❤️</h2>", unsafe_allow_html=True)
-    st.markdown("<h3>🥰 Não tinha como fugir!</h3>", unsafe_allow_html=True)
-else:
-    st.markdown("<h1>Você me ama? 🥺👉👈</h1>", unsafe_allow_html=True)
-    
-    # Mostra a risada de provocação centralizada
-    if st.session_state.provocacao:
-        st.markdown(f"<h3>✨ {st.session_state.provocacao}</h3>", unsafe_allow_html=True)
-    else:
-        st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Cria as 4 colunas perfeitas para o celular
-    col1, col2, col3, col4 = st.columns(4)
-    
-    # O botão SIM fica estático e destacado na primeira coluna
-    with col1:
-        st.button("SIM! 😍", on_click=clicar_sim, type="primary")
+    <div class="container" id="painel-jogo">
+        <div class="titulo">Você me ama? 🥺👉👈</div>
+        <div class="risada" id="texto-risada"></div>
         
-    # O botão NÃO fica pulando de coluna em coluna a cada toque!
-    if st.session_state.pos_nao == 0:
-        with col3: st.button("Não 😭", on_click=fugir)
-    elif st.session_state.pos_nao == 1:
-        with col2: st.button("Não 😭", on_click=fugir)
-    elif st.session_state.pos_nao == 2:
-        with col4: st.button("Não 😭", on_click=fugir)
-    elif st.session_state.pos_nao == 3:
-        # Posição bônus: ele volta para o estado inicial para continuar o ciclo infinito
-        st.session_state.pos_nao = 0
-        with col3: st.button("Não 😭", on_click=fugir)
+        <button class="btn-comum" id="btn-sim" onclick="ganhou()">SIM! 😍</button>
+        <button class="btn-comum" id="btn-nao" onmouseenter="fugir()" ontouchstart="fugir()">Não 😭</button>
+    </div>
+
+    <script>
+    // Banco de dados de risadas direto no navegador
+    const risadas = ["Mwahahah! 😈", "Hihihihi! 🏃‍♀️", "Nyehehe! ☠️"];
+    
+    function fugir() {
+        const btnNao = document.getElementById('btn-nao');
+        const txtRisada = document.getElementById('texto-risada');
+        
+        // Sorteia pixels reais baseados no tamanho da tela do celular dela
+        const novoX = Math.floor(Math.random() * 70) + 5; // Entre 5% e 75% da largura
+        const novoY = Math.floor(Math.random() * 250) + 120; // Entre 120px e 370px de altura
+        
+        // Aplica a nova posição instantaneamente (Zero delay de internet!)
+        btnNao.style.left = novoX + '%';
+        btnNao.style.top = novoY + 'px';
+        
+        // Sorteia a risada
+        const risadaAleatoria = risadas[Math.floor(Math.random() * risadas.length)];
+        txtRisada.innerText = "✨ " + risadaAleatoria;
+    }
+    
+    function ganhou() {
+        const painel = document.getElementById('painel-jogo');
+        // Transforma a tela inteira na mensagem de amor
+        painel.innerHTML = `
+            <div style="margin-top: 80px; text-align: center; animation: fadeIn 0.5s;">
+                <h1 style="color: #be185d !important; font-size: 36px; font-weight: bold; font-family: Arial;">✨ 🎉 Sabia! 🎉 ✨</h1>
+                <h2 style="color: #db2777 !important; margin-top: 20px; font-family: Arial;">❤️ AMO VOCÊ! ❤️</h2>
+                <h3 style="color: #4c0519 !important; font-size: 18px; margin-top: 20px; font-family: Arial;">Anão tinha como fugir! 🥰</h3>
+            </div>
+        `;
+    }
+    </script>
+""", unsafe_allow_html=True)
